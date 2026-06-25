@@ -343,6 +343,7 @@ function updateTelemetryUI(data) {
         if (data.new_achievements && data.new_achievements.length > 0) {
             data.new_achievements.forEach(item => {
                 triggerConfettiCelebrate();
+                showScoreToast(item.points);
                 addLog(`🎉 得点獲得! マーカー ID ${item.id} (+${item.points}てん)`, 'success');
             });
         }
@@ -367,6 +368,31 @@ function triggerConfettiCelebrate() {
         spread: 55,
         origin: { x: 1, y: 0.8 }
     });
+}
+
+// Floating score achievement toast function
+function showScoreToast(points) {
+    let container = document.getElementById('score-toast-container');
+    if (!container) {
+        container = document.createElement('div');
+        container.id = 'score-toast-container';
+        container.className = 'score-toast-container';
+        document.body.appendChild(container);
+    }
+    
+    const toast = document.createElement('div');
+    toast.className = 'score-toast';
+    toast.innerHTML = `<span>🎉</span> <span style="color: var(--color-success); font-size: 24px; font-weight: 900; font-family: 'Outfit', sans-serif;">+${points}</span>点 かくとく！`;
+    
+    container.appendChild(toast);
+    
+    // Remove toast after animation completes (2.7s total)
+    setTimeout(() => {
+        toast.remove();
+        if (container.children.length === 0) {
+            container.remove();
+        }
+    }, 2700);
 }
 
 // Reconnect/init trigger
@@ -465,18 +491,29 @@ async function submitScore() {
         });
         const data = await response.json();
         if (data.success) {
+            // 1. Close nickname registration modal
             closeModal('modal-nickname');
-            clearWorkspaceSilent(); // Reset blocks
             
-            // Pop nice full screen confetti for registration completion!
+            // 2. Open ranking board immediately so the player can see their position
+            await openRankingModal();
+            
+            // 3. Pop nice full screen confetti for registration completion!
             confetti({
                 particleCount: 150,
                 spread: 80,
                 origin: { y: 0.6 }
             });
             
-            // Open ranking board immediately
-            openRankingModal();
+            // 4. Perform complete reset actions for the next player
+            clearWorkspaceSilent(); // Reset blocks
+            resetRunState(); // Reset running code states
+            
+            // Instant UI update to prevent status lag
+            document.getElementById('val-score').innerText = '0';
+            document.getElementById('val-rank').innerText = '--';
+            
+            // Call reset API to ensure backend is fully synchronized
+            await fetch('/api/game/reset', { method: 'POST' });
         }
     } catch (e) {
         alert("得点の登録に失敗しました。");

@@ -366,48 +366,27 @@
             <div class="card">
                 <h2><i class="fa-solid fa-sliders"></i> ゲームの配点設定</h2>
                 
-                <div class="switch-container">
+                <label class="switch-container">
                     <input type="checkbox" id="chk-game-mode-settings">
                     <span class="switch-slider"></span>
                     <span class="switch-label">🎮 ARゲームモードを有効にする</span>
+                </label>
+
+                <!-- Dynamic Add Form -->
+                <div class="add-marker-form" style="display: flex; gap: 10px; align-items: flex-end; background: #f8fafc; padding: 14px; border-radius: var(--border-radius-sm); border: 2px dashed #cbd5e0; margin-top: 10px;">
+                    <div style="flex: 1;">
+                        <label style="font-size: 11px; font-weight: 800; color: var(--text-muted); display: block; margin-bottom: 4px;">マーカーID (0〜49)</label>
+                        <input type="number" id="new-marker-id" class="score-input" style="width: 100%; text-align: left;" min="0" max="49" placeholder="例: 5">
+                    </div>
+                    <div style="flex: 1;">
+                        <label style="font-size: 11px; font-weight: 800; color: var(--text-muted); display: block; margin-bottom: 4px;">得点</label>
+                        <input type="number" id="new-marker-score" class="score-input" style="width: 100%; text-align: left;" min="0" max="1000" placeholder="例: 150">
+                    </div>
+                    <button class="btn btn-primary" id="btn-add-marker" style="height: 38px; padding: 0 15px;"><i class="fa-solid fa-plus"></i> 追加</button>
                 </div>
 
-                <div class="score-list">
-                    <div class="score-row">
-                        <span class="marker-id-label"><span class="marker-color-tag" style="background-color: #2ecc71;"></span>マーカー ID: 0</span>
-                        <div class="score-input-wrapper">
-                            <input type="number" class="score-input" id="score-0" min="0" max="1000" value="10">
-                            <span>てん</span>
-                        </div>
-                    </div>
-                    <div class="score-row">
-                        <span class="marker-id-label"><span class="marker-color-tag" style="background-color: #3498db;"></span>マーカー ID: 1</span>
-                        <div class="score-input-wrapper">
-                            <input type="number" class="score-input" id="score-1" min="0" max="1000" value="20">
-                            <span>てん</span>
-                        </div>
-                    </div>
-                    <div class="score-row">
-                        <span class="marker-id-label"><span class="marker-color-tag" style="background-color: #9b59b6;"></span>マーカー ID: 2</span>
-                        <div class="score-input-wrapper">
-                            <input type="number" class="score-input" id="score-2" min="0" max="1000" value="30">
-                            <span>てん</span>
-                        </div>
-                    </div>
-                    <div class="score-row">
-                        <span class="marker-id-label"><span class="marker-color-tag" style="background-color: #f1c40f;"></span>マーカー ID: 3</span>
-                        <div class="score-input-wrapper">
-                            <input type="number" class="score-input" id="score-3" min="0" max="1000" value="50">
-                            <span>てん</span>
-                        </div>
-                    </div>
-                    <div class="score-row">
-                        <span class="marker-id-label"><span class="marker-color-tag" style="background-color: #e74c3c;"></span>マーカー ID: 4</span>
-                        <div class="score-input-wrapper">
-                            <input type="number" class="score-input" id="score-4" min="0" max="1000" value="100">
-                            <span>てん</span>
-                        </div>
-                    </div>
+                <div class="score-list" id="score-list-container">
+                    <!-- Loaded dynamically -->
                 </div>
 
                 <button class="btn btn-primary" id="btn-save-settings" style="width: 100%;">
@@ -419,30 +398,11 @@
             <div class="card">
                 <h2><i class="fa-solid fa-print"></i> ARマーカーの印刷</h2>
                 <p style="font-size: 13px; color: var(--text-muted); line-height: 1.4;">
-                    ゲームで使用するArUcoマーカー（ID 0〜4）です。以下の画像をクリックするか、下部のボタンを押すことで、A4用紙に大きく1枚ずつ印刷できます。
+                    ゲームで使用するArUcoマーカーです。以下の画像をクリックするか、下部のボタンを押すことで、A4用紙に大きく1枚ずつ印刷できます。
                 </p>
 
-                <div class="marker-previews">
-                    <div class="marker-preview-item" onclick="printSingleMarker(0)">
-                        <img src="/api/game/marker/0" alt="Marker 0">
-                        <span class="marker-preview-label">ID: 0 (印刷)</span>
-                    </div>
-                    <div class="marker-preview-item" onclick="printSingleMarker(1)">
-                        <img src="/api/game/marker/1" alt="Marker 1">
-                        <span class="marker-preview-label">ID: 1 (印刷)</span>
-                    </div>
-                    <div class="marker-preview-item" onclick="printSingleMarker(2)">
-                        <img src="/api/game/marker/2" alt="Marker 2">
-                        <span class="marker-preview-label">ID: 2 (印刷)</span>
-                    </div>
-                    <div class="marker-preview-item" onclick="printSingleMarker(3)">
-                        <img src="/api/game/marker/3" alt="Marker 3">
-                        <span class="marker-preview-label">ID: 3 (印刷)</span>
-                    </div>
-                    <div class="marker-preview-item" style="grid-column: span 2;" onclick="printSingleMarker(4)">
-                        <img src="/api/game/marker/4" alt="Marker 4">
-                        <span class="marker-preview-label">ID: 4 (印刷)</span>
-                    </div>
+                <div class="marker-previews" id="previews-container">
+                    <!-- Loaded dynamically -->
                 </div>
 
                 <button class="btn btn-outline" id="btn-print-all" style="width: 100%;">
@@ -454,16 +414,19 @@
 
     <!-- Print Layout (Invisible on screen, styled only for paper) -->
     <div class="print-layout">
-        <!-- Built dynamically via javascript when print action triggered -->
         <div id="print-area"></div>
     </div>
 
     <!-- Client Page Script -->
     <script>
+        // Global state to track currently active markers configuration
+        let activeMarkers = {};
+
         document.addEventListener("DOMContentLoaded", () => {
             loadSettings();
             document.getElementById('btn-save-settings').addEventListener('click', saveSettings);
             document.getElementById('btn-print-all').addEventListener('click', printAllMarkers);
+            document.getElementById('btn-add-marker').addEventListener('click', addMarker);
         });
 
         // Load configuration from API
@@ -473,25 +436,117 @@
                 const data = await response.json();
                 
                 document.getElementById('chk-game-mode-settings').checked = data.game_mode_enabled;
+                activeMarkers = data.marker_scores || {};
                 
-                // Populate score fields
-                for (let i = 0; i <= 4; i++) {
-                    const score = data.marker_scores[i] !== undefined ? data.marker_scores[i] : 10;
-                    document.getElementById(`score-${i}`).value = score;
-                }
+                renderActiveMarkers();
             } catch (e) {
                 alert("設定の取得に失敗しました。");
+            }
+        }
+
+        // Render both the configuration rows list and print previews
+        function renderActiveMarkers() {
+            const listContainer = document.getElementById('score-list-container');
+            const previewsContainer = document.getElementById('previews-container');
+            
+            listContainer.innerHTML = '';
+            previewsContainer.innerHTML = '';
+            
+            const sortedIds = Object.keys(activeMarkers).map(Number).sort((a, b) => a - b);
+            
+            if (sortedIds.length === 0) {
+                listContainer.innerHTML = '<div style="text-align: center; color: var(--text-muted); padding: 20px; font-weight: 800;">登録されているマーカーがありません。「追加」フォームから作成してください。</div>';
+                previewsContainer.innerHTML = '<div style="text-align: center; color: var(--text-muted); padding: 20px; font-weight: 800; grid-column: span 2;">印刷できるマーカーがありません。</div>';
+                return;
+            }
+            
+            // Marker colors array for bullet points
+            const colors = ['#2ecc71', '#3498db', '#9b59b6', '#f1c40f', '#e74c3c', '#1abc9c', '#e67e22'];
+
+            sortedIds.forEach((id, idx) => {
+                const score = activeMarkers[id];
+                const color = colors[id % colors.length];
+                
+                // 1. Render score row configuration
+                const row = document.createElement('div');
+                row.className = 'score-row';
+                row.innerHTML = `
+                    <span class="marker-id-label"><span class="marker-color-tag" style="background-color: ${color};"></span>マーカー ID: ${id}</span>
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <div class="score-input-wrapper">
+                            <input type="number" class="score-input marker-score-val" data-id="${id}" min="0" max="1000" value="${score}">
+                            <span>点</span>
+                        </div>
+                        <button class="btn btn-outline" style="padding: 6px 10px; color: var(--color-danger); border-color: rgba(231, 76, 60, 0.2);" onclick="deleteMarker(${id})">
+                            <i class="fa-solid fa-trash-can"></i>
+                        </button>
+                    </div>
+                `;
+                listContainer.appendChild(row);
+                
+                // 2. Render print preview items
+                const isSpan = (sortedIds.length % 2 !== 0 && idx === sortedIds.length - 1);
+                
+                const preview = document.createElement('div');
+                preview.className = 'marker-preview-item';
+                if (isSpan) preview.style.gridColumn = 'span 2';
+                preview.onclick = () => printSingleMarker(id);
+                preview.innerHTML = `
+                    <img src="/api/game/marker/${id}" alt="Marker ${id}">
+                    <span class="marker-preview-label">ID: ${id} (印刷)</span>
+                `;
+                previewsContainer.appendChild(preview);
+            });
+        }
+
+        // Add a new marker configuration
+        function addMarker() {
+            const idInput = document.getElementById('new-marker-id');
+            const scoreInput = document.getElementById('new-marker-score');
+            
+            const id = parseInt(idInput.value);
+            const score = parseInt(scoreInput.value);
+            
+            if (isNaN(id) || id < 0 || id > 49) {
+                alert("マーカーIDは 0 から 49 の数値を指定してください。");
+                return;
+            }
+            if (isNaN(score) || score < 0 || score > 1000) {
+                alert("得点は 0 から 1000 の数値を指定してください。");
+                return;
+            }
+            
+            if (activeMarkers[id] !== undefined) {
+                if (!confirm(`マーカーID ${id} はすでに登録されています。点数を上書きしますか？`)) {
+                    return;
+                }
+            }
+            
+            activeMarkers[id] = score;
+            idInput.value = '';
+            scoreInput.value = '';
+            
+            renderActiveMarkers();
+        }
+
+        // Delete a marker configuration locally
+        function deleteMarker(id) {
+            if (confirm(`マーカーID ${id} の配点設定を削除しますか？`)) {
+                delete activeMarkers[id];
+                renderActiveMarkers();
             }
         }
 
         // Save configuration to API
         async function saveSettings() {
             const isGameMode = document.getElementById('chk-game-mode-settings').checked;
-            const markerScores = {};
             
-            for (let i = 0; i <= 4; i++) {
-                markerScores[i] = parseInt(document.getElementById(`score-${i}`).value) || 0;
-            }
+            // Sync values from input list before saving
+            const scoreInputs = document.querySelectorAll('.marker-score-val');
+            scoreInputs.forEach(input => {
+                const id = input.getAttribute('data-id');
+                activeMarkers[id] = parseInt(input.value) || 0;
+            });
             
             try {
                 const response = await fetch('/api/settings/save', {
@@ -499,14 +554,14 @@
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         game_mode_enabled: isGameMode,
-                        marker_scores: markerScores
+                        marker_scores: activeMarkers
                     })
                 });
                 
                 const data = await response.json();
                 if (data.success) {
                     alert("設定を保存しました！");
-                    loadSettings(); // refresh
+                    loadSettings(); // refresh from backend
                 }
             } catch (e) {
                 alert("設定の保存に失敗しました。");
@@ -516,17 +571,24 @@
         // Print single A4 sized marker
         function printSingleMarker(markerId) {
             const printArea = document.getElementById('print-area');
-            const scoreVal = document.getElementById(`score-${markerId}`).value;
+            const scoreInputs = document.querySelectorAll('.marker-score-val');
+            
+            // Get score value locally
+            let scoreVal = activeMarkers[markerId] || 10;
+            scoreInputs.forEach(input => {
+                if (input.getAttribute('data-id') == markerId) {
+                    scoreVal = input.value;
+                }
+            });
             
             printArea.innerHTML = `
                 <div class="print-page">
                     <img src="/api/game/marker/${markerId}" alt="Marker ${markerId}">
                     <div class="print-label">Tello AR Target : ID ${markerId}</div>
-                    <div class="print-sublabel">${scoreVal} てん</div>
+                    <div class="print-sublabel">${scoreVal} 点</div>
                 </div>
             `;
             
-            // Wait slightly for image stream load then open print menu
             setTimeout(() => {
                 window.print();
             }, 300);
@@ -537,16 +599,30 @@
             const printArea = document.getElementById('print-area');
             printArea.innerHTML = '';
             
-            for (let id = 0; id <= 4; id++) {
-                const scoreVal = document.getElementById(`score-${id}`).value;
+            const sortedIds = Object.keys(activeMarkers).map(Number).sort((a, b) => a - b);
+            if (sortedIds.length === 0) {
+                alert("印刷するマーカーがありません。");
+                return;
+            }
+            
+            const scoreInputs = document.querySelectorAll('.marker-score-val');
+            
+            sortedIds.forEach(id => {
+                let scoreVal = activeMarkers[id] || 10;
+                scoreInputs.forEach(input => {
+                    if (input.getAttribute('data-id') == id) {
+                        scoreVal = input.value;
+                    }
+                });
+                
                 printArea.innerHTML += `
                     <div class="print-page">
                         <img src="/api/game/marker/${id}" alt="Marker ${id}">
                         <div class="print-label">Tello AR Target : ID ${id}</div>
-                        <div class="print-sublabel">${scoreVal} てん</div>
+                        <div class="print-sublabel">${scoreVal} 点</div>
                     </div>
                 `;
-            }
+            });
             
             setTimeout(() => {
                 window.print();

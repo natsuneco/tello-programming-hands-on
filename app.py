@@ -29,7 +29,7 @@ class GameManager:
         self.current_score = 0
         self.detected_markers = set()
         self.newly_detected = []
-        self.lock = threading.Lock()
+        self.lock = threading.RLock()
         
         # Load ranking
         self.ranking = []
@@ -390,10 +390,15 @@ class TelloController:
 
             # In Demo mode, simulate finding an ArUco marker periodically if flying
             if game_manager.game_mode_enabled and self.altitude > 0:
-                # Every ~10 seconds, mock detecting a random marker from ID 0 to 4
+                # Every ~10 seconds, mock detecting a random marker from configured active markers
                 sim_sec = int(time.time()) % 12
                 if sim_sec == 5:
-                    mock_id = (int(time.time()) // 12) % 5
+                    with game_manager.lock:
+                        marker_ids = list(game_manager.marker_scores.keys())
+                    if marker_ids:
+                        mock_id = int(marker_ids[(int(time.time()) // 12) % len(marker_ids)])
+                    else:
+                        mock_id = (int(time.time()) // 12) % 5
                     game_manager.detect_marker(mock_id)
                     
                     # Draw a mock marker bounding box in top right for visual demo feedback
