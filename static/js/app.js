@@ -15,6 +15,18 @@ const LOG_THEMES = {
 
 // --- Custom Blockly Blocks Definitions ---
 
+// Start event block
+Blockly.Blocks['tello_start'] = {
+    init: function() {
+        this.appendDummyInput()
+            .appendField("🚩 スタートが押されたとき");
+        this.setNextStatement(true, null);
+        this.setColour('#4caf50');
+        this.setTooltip("プログラムを開始するスタート地点です。");
+        this.setHelpUrl("");
+    }
+};
+
 // Takeoff block
 Blockly.Blocks['tello_takeoff'] = {
     init: function() {
@@ -133,6 +145,10 @@ Blockly.Blocks['tello_wait'] = {
 
 // --- JavaScript Generators ---
 
+javascript.javascriptGenerator.forBlock['tello_start'] = function(block) {
+    return ''; // The start block itself generates no code, blockToCode generates connected statement chain
+};
+
 javascript.javascriptGenerator.forBlock['tello_takeoff'] = function(block) {
     return 'await executeCommand("takeoff");\n';
 };
@@ -169,11 +185,18 @@ javascript.javascriptGenerator.forBlock['tello_wait'] = function(block) {
 
 // Document Ready Initialization
 document.addEventListener("DOMContentLoaded", () => {
+    // Create a custom theme inheriting Classic theme to enable startHats without losing default block colors
+    const customTheme = Blockly.Theme.defineTheme('custom_classic', {
+        'base': Blockly.Themes.Classic,
+        'startHats': true
+    });
+
     // Initialize Blockly Workspace
     workspace = Blockly.inject('blockly-div', {
         toolbox: document.getElementById('toolbox'),
         scrollbars: true,
         trashcan: true,
+        theme: customTheme,
         grid: {
             spacing: 25,
             length: 3,
@@ -627,9 +650,25 @@ async function startProgram() {
     document.getElementById('btn-stop').disabled = false;
     document.getElementById('btn-pause').disabled = false;
     
-    addLog("プログラムを実行します...", 'system');
+    // Search for "スタートが押されたとき" block
+    const topBlocks = workspace.getTopBlocks(true);
+    let startBlock = null;
+    for (let i = 0; i < topBlocks.length; i++) {
+        if (topBlocks[i].type === 'tello_start') {
+            startBlock = topBlocks[i];
+            break;
+        }
+    }
     
-    const code = javascript.javascriptGenerator.workspaceToCode(workspace);
+    let code = '';
+    if (startBlock) {
+        addLog("🚩 「スタートが押されたとき」から実行します...", 'system');
+        code = javascript.javascriptGenerator.blockToCode(startBlock);
+    } else {
+        addLog("プログラムを実行します...", 'system');
+        code = javascript.javascriptGenerator.workspaceToCode(workspace);
+    }
+    
     console.log("Generated Code:\n", code);
     
     if (!code.trim()) {
