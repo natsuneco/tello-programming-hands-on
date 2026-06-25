@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>プログラミング体験ゲーム | リアルタイム・リーダーボード</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@600;800;900&family=Zen+Maru+Gothic:wght@700;900&display=swap" rel="stylesheet">
+    <!-- FontAwesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        :root {
+            --bg-primary: #f0f4f8;
+            --bg-card: #ffffff;
+            --text-primary: #2c3e50;
+            --text-muted: #7f8c8d;
+            --color-primary: #4a90e2;
+            --color-gold: #f1c40f;
+            --color-silver: #bdc3c7;
+            --color-bronze: #e67e22;
+            --color-accent: #9b59b6;
+            
+            --border-radius-lg: 24px;
+            --border-radius-md: 16px;
+            --border-radius-sm: 8px;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Zen Maru Gothic', 'Outfit', sans-serif;
+            background: linear-gradient(135deg, #f0f4f9 0%, #dbeafe 100%);
+            color: var(--text-primary);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 40px 20px;
+        }
+
+        .leaderboard-container {
+            width: 100%;
+            max-width: 900px;
+            background: var(--bg-card);
+            border: 4px solid var(--color-primary);
+            border-radius: var(--border-radius-lg);
+            box-shadow: 0 12px 0 rgba(74, 144, 226, 0.15), 0 25px 50px rgba(0, 0, 0, 0.06);
+            padding: 40px;
+            display: flex;
+            flex-direction: column;
+            gap: 25px;
+            z-index: 10;
+        }
+
+        .header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 4px solid #f1f5f9;
+            padding-bottom: 20px;
+        }
+
+        .title-area {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .logo-icon {
+            font-size: 32px;
+            color: #ffffff;
+            background-color: var(--color-primary);
+            width: 60px;
+            height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 18px;
+            box-shadow: 0 4px 0 #2980b9;
+        }
+
+        .title-text h1 {
+            font-size: 26px;
+            font-weight: 900;
+            color: var(--color-primary);
+        }
+
+        /* Leaderboard entries list */
+        .ranking-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            max-height: 60vh;
+            overflow-y: auto;
+            padding-right: 6px;
+        }
+
+        .ranking-list::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .ranking-list::-webkit-scrollbar-thumb {
+            background: #cbd5e0;
+            border-radius: 4px;
+        }
+
+        .ranking-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 16px 24px;
+            border-radius: var(--border-radius-md);
+            background: #f8fafc;
+            border: 2px solid #edf2f7;
+            transition: all 0.2s ease-in-out;
+            animation: slideUp 0.4s ease-out;
+        }
+
+        .ranking-row:hover {
+            background: #ebf5ff;
+            transform: translateX(5px);
+            border-color: var(--color-primary);
+        }
+
+        @keyframes slideUp {
+            from { transform: translateY(15px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        .row-left {
+            display: flex;
+            align-items: center;
+            gap: 24px;
+        }
+
+        .rank-badge {
+            width: 44px;
+            height: 44px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            font-weight: 900;
+            border-radius: 12px;
+            background: #e2e8f0;
+            color: var(--text-primary);
+            font-family: 'Outfit', sans-serif;
+            border: 2px solid #cbd5e0;
+        }
+
+        /* Special ranks designs */
+        .rank-1 {
+            background: var(--color-gold);
+            color: #ffffff;
+            border-color: #f39c12;
+            box-shadow: 0 4px 0 #d4ac0d;
+        }
+
+        .rank-2 {
+            background: var(--color-silver);
+            color: #ffffff;
+            border-color: #95a5a6;
+            box-shadow: 0 4px 0 #7f8c8d;
+        }
+
+        .rank-3 {
+            background: var(--color-bronze);
+            color: #ffffff;
+            border-color: #d35400;
+            box-shadow: 0 4px 0 #a04000;
+        }
+
+        .pilot-name {
+            font-size: 22px;
+            font-weight: 900;
+            color: var(--text-primary);
+        }
+
+        .row-right {
+            display: flex;
+            align-items: center;
+            gap: 24px;
+        }
+
+        .pilot-score {
+            font-size: 26px;
+            font-weight: 900;
+            font-family: 'Outfit', sans-serif;
+            color: var(--color-primary);
+        }
+
+        .pilot-date {
+            font-size: 12px;
+            color: var(--text-muted);
+            font-weight: 700;
+            font-family: 'Outfit', sans-serif;
+        }
+        
+        .empty-message {
+            text-align: center;
+            padding: 50px 0;
+            color: var(--text-muted);
+            font-size: 18px;
+            font-weight: 800;
+        }
+    </style>
+</head>
+<body>
+    <div class="leaderboard-container">
+        <!-- Header -->
+        <header class="header">
+            <div class="title-area">
+                <div class="logo-icon"><i class="fa-solid fa-crown"></i></div>
+                <div class="title-text">
+                    <h1>プログラミング体験ゲーム ランキングボード</h1>
+                </div>
+            </div>
+        </header>
+
+        <!-- Ranking list -->
+        <div class="ranking-list" id="ranking-list">
+            <!-- Loaded dynamically -->
+            <div class="empty-message">ランキングの取得に失敗しました、または登録がありません。</div>
+        </div>
+    </div>
+
+    <!-- Client Script -->
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+            fetchRankings();
+            // Poll for update every 5 seconds
+            setInterval(fetchRankings, 5000);
+        });
+
+        async function fetchRankings() {
+            try {
+                const response = await fetch('/api/game/ranking');
+                const data = await response.json();
+                
+                const rankingList = document.getElementById('ranking-list');
+                rankingList.innerHTML = '';
+                
+                if (!data.ranking || data.ranking.length === 0) {
+                    rankingList.innerHTML = '<div class="empty-message">まだスコアの登録がありません。一番乗りを目指そう！</div>';
+                    return;
+                }
+                
+                // Build ranking list (Top 10 display on signage)
+                data.ranking.slice(0, 10).forEach((entry, idx) => {
+                    const rank = idx + 1;
+                    let rankClass = `rank-badge`;
+                    let rankDisplay = rank;
+                    
+                    if (rank <= 3) {
+                        rankClass += ` rank-${rank}`;
+                        if (rank === 1) rankDisplay = '<i class="fa-solid fa-crown"></i>';
+                        else if (rank === 2) rankDisplay = '2';
+                        else if (rank === 3) rankDisplay = '3';
+                    }
+                    
+                    // Simple escape
+                    const escapedName = escapeHTML(entry.name);
+                    const formattedDate = entry.date ? entry.date.split(" ")[1] : ""; // show only HH:MM:SS
+                    
+                    const row = document.createElement('div');
+                    row.className = 'ranking-row';
+                    row.innerHTML = `
+                        <div class="row-left">
+                            <div class="${rankClass}">${rankDisplay}</div>
+                            <div class="pilot-name">${escapedName}</div>
+                        </div>
+                        <div class="row-right">
+                            <div class="pilot-date">${formattedDate}</div>
+                            <div class="pilot-score">${entry.score} <span style="font-size:14px; font-weight:800; color:var(--text-muted); margin-left:4px;">点</span></div>
+                        </div>
+                    `;
+                    rankingList.appendChild(row);
+                });
+            } catch (e) {
+                console.error("ランキング取得失敗:", e);
+            }
+        }
+
+        function escapeHTML(str) {
+            return str.replace(/[&<>'"]/g, 
+                tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[tag] || tag)
+            );
+        }
+    </script>
+</body>
+</html>

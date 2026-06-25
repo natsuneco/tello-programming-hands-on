@@ -1,0 +1,557 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>プログラミング体験ゲーム | ゲーム設定とマーカー印刷</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;800&family=Zen+Maru+Gothic:wght@500;700;900&display=swap" rel="stylesheet">
+    <!-- FontAwesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        :root {
+            --bg-primary: #f0f4f9;
+            --bg-card: #ffffff;
+            --text-primary: #2c3e50;
+            --text-muted: #7f8c8d;
+            --color-primary: #4a90e2;
+            --color-success: #2ecc71;
+            --color-warning: #f1c40f;
+            --color-danger: #e74c3c;
+            --border-radius-sm: 8px;
+            --border-radius-md: 16px;
+            --border-radius-lg: 24px;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Zen Maru Gothic', 'Outfit', sans-serif;
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+            padding: 40px 20px;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        header.settings-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 30px;
+            background-color: var(--bg-card);
+            padding: 20px 30px;
+            border-radius: var(--border-radius-md);
+            border: 3px solid #e2e8f0;
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.05);
+        }
+
+        .logo-area {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .logo-icon {
+            font-size: 24px;
+            color: var(--color-primary);
+            background-color: #ebf5ff;
+            width: 45px;
+            height: 45px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            border: 3px solid var(--color-primary);
+        }
+
+        .logo-text h1 {
+            font-size: 20px;
+            font-weight: 900;
+            color: var(--color-primary);
+            line-height: 1.1;
+        }
+
+        .btn {
+            border: none;
+            font-family: inherit;
+            font-weight: 800;
+            font-size: 13px;
+            padding: 10px 20px;
+            border-radius: var(--border-radius-sm);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            transition: all 0.2s;
+            text-decoration: none;
+        }
+
+        .btn-primary {
+            background-color: var(--color-primary);
+            color: white;
+            box-shadow: 0 4px 0 #2980b9;
+        }
+
+        .btn-primary:hover {
+            background-color: #357abd;
+        }
+
+        .btn-outline {
+            background-color: transparent;
+            border: 2px solid var(--text-muted);
+            color: var(--text-muted);
+        }
+
+        .btn-outline:hover {
+            background-color: #edf2f7;
+            color: var(--text-primary);
+            border-color: var(--text-primary);
+        }
+
+        .grid-layout {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+        }
+
+        @media (max-width: 768px) {
+            .grid-layout {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .card {
+            background-color: var(--bg-card);
+            border-radius: var(--border-radius-md);
+            border: 3px solid #e2e8f0;
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.05);
+            padding: 24px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .card h2 {
+            font-size: 16px;
+            font-weight: 900;
+            border-bottom: 3px solid #f1f5f9;
+            padding-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        /* Forms Switch */
+        .switch-container {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            cursor: pointer;
+        }
+
+        .switch-container input {
+            display: none;
+        }
+
+        .switch-slider {
+            width: 50px;
+            height: 26px;
+            background-color: #cbd5e0;
+            border-radius: 13px;
+            position: relative;
+            transition: background-color 0.2s;
+            border: 2px solid #a0aec0;
+        }
+
+        .switch-slider::before {
+            content: '';
+            position: absolute;
+            width: 18px;
+            height: 18px;
+            background-color: white;
+            border-radius: 50%;
+            top: 2px;
+            left: 2px;
+            transition: transform 0.2s;
+        }
+
+        .switch-container input:checked + .switch-slider {
+            background-color: var(--color-success);
+            border-color: #27ae60;
+        }
+
+        .switch-container input:checked + .switch-slider::before {
+            transform: translateX(24px);
+        }
+
+        .switch-label {
+            font-weight: 800;
+        }
+
+        /* Score inputs list */
+        .score-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .score-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background-color: #f8fafc;
+            padding: 10px 16px;
+            border-radius: var(--border-radius-sm);
+            border: 2px solid #edf2f7;
+        }
+
+        .marker-id-label {
+            font-weight: 800;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .marker-color-tag {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background-color: var(--color-primary);
+        }
+
+        .score-input-wrapper {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .score-input {
+            width: 80px;
+            padding: 8px;
+            border-radius: 6px;
+            border: 2px solid #cbd5e0;
+            font-family: inherit;
+            font-size: 14px;
+            font-weight: 800;
+            text-align: right;
+            outline: none;
+        }
+
+        .score-input:focus {
+            border-color: var(--color-primary);
+        }
+
+        /* Marker Previews (Printer area) */
+        .marker-previews {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+        }
+
+        .marker-preview-item {
+            background-color: #f8fafc;
+            border: 2px solid #edf2f7;
+            border-radius: var(--border-radius-sm);
+            padding: 12px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .marker-preview-item:hover {
+            transform: scale(1.03);
+            border-color: var(--color-primary);
+        }
+
+        .marker-preview-item img {
+            width: 100px;
+            height: 100px;
+            background-color: white;
+            border: 1px solid #e2e8f0;
+        }
+
+        .marker-preview-label {
+            font-size: 12px;
+            font-weight: 800;
+            color: var(--text-muted);
+        }
+
+        /* Hidden print sections */
+        .print-layout {
+            display: none;
+        }
+
+        /* Print Media Styles */
+        @media print {
+            body {
+                background-color: white;
+                color: black;
+                padding: 0;
+                margin: 0;
+            }
+            
+            .no-print {
+                display: none !important;
+            }
+
+            .print-layout {
+                display: block !important;
+            }
+
+            .print-page {
+                page-break-after: always;
+                height: 100vh;
+                display: flex;
+                flex-direction: column;
+                justify-content: center;
+                align-items: center;
+            }
+
+            .print-page img {
+                width: 70vw !important;
+                height: 70vw !important;
+                max-width: 500px !important;
+                max-height: 500px !important;
+            }
+
+            .print-label {
+                font-size: 28px !important;
+                font-weight: 900;
+                margin-top: 30px;
+                font-family: sans-serif;
+                text-align: center;
+            }
+            
+            .print-sublabel {
+                font-size: 18px;
+                color: #555;
+                margin-top: 10px;
+                text-align: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container no-print">
+        <!-- Settings Header -->
+        <header class="settings-header">
+            <div class="logo-area">
+                <span class="logo-icon"><i class="fa-solid fa-gamepad"></i></span>
+                <div class="logo-text">
+                    <h1>プログラミング体験ゲーム ゲーム設定</h1>
+                    <span class="sub-text">ARマーカーの配点設定と印刷</span>
+                </div>
+            </div>
+            <a href="/" class="btn btn-outline"><i class="fa-solid fa-arrow-left"></i> エディタにもどる</a>
+        </header>
+
+        <div class="grid-layout">
+            <!-- Left Side: Score & Mode configuration -->
+            <div class="card">
+                <h2><i class="fa-solid fa-sliders"></i> ゲームの配点設定</h2>
+                
+                <div class="switch-container">
+                    <input type="checkbox" id="chk-game-mode-settings">
+                    <span class="switch-slider"></span>
+                    <span class="switch-label">🎮 ARゲームモードを有効にする</span>
+                </div>
+
+                <div class="score-list">
+                    <div class="score-row">
+                        <span class="marker-id-label"><span class="marker-color-tag" style="background-color: #2ecc71;"></span>マーカー ID: 0</span>
+                        <div class="score-input-wrapper">
+                            <input type="number" class="score-input" id="score-0" min="0" max="1000" value="10">
+                            <span>てん</span>
+                        </div>
+                    </div>
+                    <div class="score-row">
+                        <span class="marker-id-label"><span class="marker-color-tag" style="background-color: #3498db;"></span>マーカー ID: 1</span>
+                        <div class="score-input-wrapper">
+                            <input type="number" class="score-input" id="score-1" min="0" max="1000" value="20">
+                            <span>てん</span>
+                        </div>
+                    </div>
+                    <div class="score-row">
+                        <span class="marker-id-label"><span class="marker-color-tag" style="background-color: #9b59b6;"></span>マーカー ID: 2</span>
+                        <div class="score-input-wrapper">
+                            <input type="number" class="score-input" id="score-2" min="0" max="1000" value="30">
+                            <span>てん</span>
+                        </div>
+                    </div>
+                    <div class="score-row">
+                        <span class="marker-id-label"><span class="marker-color-tag" style="background-color: #f1c40f;"></span>マーカー ID: 3</span>
+                        <div class="score-input-wrapper">
+                            <input type="number" class="score-input" id="score-3" min="0" max="1000" value="50">
+                            <span>てん</span>
+                        </div>
+                    </div>
+                    <div class="score-row">
+                        <span class="marker-id-label"><span class="marker-color-tag" style="background-color: #e74c3c;"></span>マーカー ID: 4</span>
+                        <div class="score-input-wrapper">
+                            <input type="number" class="score-input" id="score-4" min="0" max="1000" value="100">
+                            <span>てん</span>
+                        </div>
+                    </div>
+                </div>
+
+                <button class="btn btn-primary" id="btn-save-settings" style="width: 100%;">
+                    <i class="fa-solid fa-save"></i> 設定を保存する
+                </button>
+            </div>
+
+            <!-- Right Side: AR Marker printing -->
+            <div class="card">
+                <h2><i class="fa-solid fa-print"></i> ARマーカーの印刷</h2>
+                <p style="font-size: 13px; color: var(--text-muted); line-height: 1.4;">
+                    ゲームで使用するArUcoマーカー（ID 0〜4）です。以下の画像をクリックするか、下部のボタンを押すことで、A4用紙に大きく1枚ずつ印刷できます。
+                </p>
+
+                <div class="marker-previews">
+                    <div class="marker-preview-item" onclick="printSingleMarker(0)">
+                        <img src="/api/game/marker/0" alt="Marker 0">
+                        <span class="marker-preview-label">ID: 0 (印刷)</span>
+                    </div>
+                    <div class="marker-preview-item" onclick="printSingleMarker(1)">
+                        <img src="/api/game/marker/1" alt="Marker 1">
+                        <span class="marker-preview-label">ID: 1 (印刷)</span>
+                    </div>
+                    <div class="marker-preview-item" onclick="printSingleMarker(2)">
+                        <img src="/api/game/marker/2" alt="Marker 2">
+                        <span class="marker-preview-label">ID: 2 (印刷)</span>
+                    </div>
+                    <div class="marker-preview-item" onclick="printSingleMarker(3)">
+                        <img src="/api/game/marker/3" alt="Marker 3">
+                        <span class="marker-preview-label">ID: 3 (印刷)</span>
+                    </div>
+                    <div class="marker-preview-item" style="grid-column: span 2;" onclick="printSingleMarker(4)">
+                        <img src="/api/game/marker/4" alt="Marker 4">
+                        <span class="marker-preview-label">ID: 4 (印刷)</span>
+                    </div>
+                </div>
+
+                <button class="btn btn-outline" id="btn-print-all" style="width: 100%;">
+                    <i class="fa-solid fa-images"></i> すべてのマーカーをまとめて印刷
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Print Layout (Invisible on screen, styled only for paper) -->
+    <div class="print-layout">
+        <!-- Built dynamically via javascript when print action triggered -->
+        <div id="print-area"></div>
+    </div>
+
+    <!-- Client Page Script -->
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+            loadSettings();
+            document.getElementById('btn-save-settings').addEventListener('click', saveSettings);
+            document.getElementById('btn-print-all').addEventListener('click', printAllMarkers);
+        });
+
+        // Load configuration from API
+        async function loadSettings() {
+            try {
+                const response = await fetch('/api/settings/get');
+                const data = await response.json();
+                
+                document.getElementById('chk-game-mode-settings').checked = data.game_mode_enabled;
+                
+                // Populate score fields
+                for (let i = 0; i <= 4; i++) {
+                    const score = data.marker_scores[i] !== undefined ? data.marker_scores[i] : 10;
+                    document.getElementById(`score-${i}`).value = score;
+                }
+            } catch (e) {
+                alert("設定の取得に失敗しました。");
+            }
+        }
+
+        // Save configuration to API
+        async function saveSettings() {
+            const isGameMode = document.getElementById('chk-game-mode-settings').checked;
+            const markerScores = {};
+            
+            for (let i = 0; i <= 4; i++) {
+                markerScores[i] = parseInt(document.getElementById(`score-${i}`).value) || 0;
+            }
+            
+            try {
+                const response = await fetch('/api/settings/save', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        game_mode_enabled: isGameMode,
+                        marker_scores: markerScores
+                    })
+                });
+                
+                const data = await response.json();
+                if (data.success) {
+                    alert("設定を保存しました！");
+                    loadSettings(); // refresh
+                }
+            } catch (e) {
+                alert("設定の保存に失敗しました。");
+            }
+        }
+
+        // Print single A4 sized marker
+        function printSingleMarker(markerId) {
+            const printArea = document.getElementById('print-area');
+            const scoreVal = document.getElementById(`score-${markerId}`).value;
+            
+            printArea.innerHTML = `
+                <div class="print-page">
+                    <img src="/api/game/marker/${markerId}" alt="Marker ${markerId}">
+                    <div class="print-label">Tello AR Target : ID ${markerId}</div>
+                    <div class="print-sublabel">${scoreVal} てん</div>
+                </div>
+            `;
+            
+            // Wait slightly for image stream load then open print menu
+            setTimeout(() => {
+                window.print();
+            }, 300);
+        }
+
+        // Print all markers sequentially, each on its own page
+        function printAllMarkers() {
+            const printArea = document.getElementById('print-area');
+            printArea.innerHTML = '';
+            
+            for (let id = 0; id <= 4; id++) {
+                const scoreVal = document.getElementById(`score-${id}`).value;
+                printArea.innerHTML += `
+                    <div class="print-page">
+                        <img src="/api/game/marker/${id}" alt="Marker ${id}">
+                        <div class="print-label">Tello AR Target : ID ${id}</div>
+                        <div class="print-sublabel">${scoreVal} てん</div>
+                    </div>
+                `;
+            }
+            
+            setTimeout(() => {
+                window.print();
+            }, 500);
+        }
+    </script>
+</body>
+</html>

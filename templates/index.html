@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>プログラミング体験ゲーム | ドローンをうごかそう！</title>
+    <!-- Google Fonts: Outfit for English & Zen Maru Gothic for Japanese (very cute/rounded) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;800&family=Zen+Maru+Gothic:wght@500;700;900&display=swap" rel="stylesheet">
+    <!-- FontAwesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Blockly CDN -->
+    <script src="https://unpkg.com/blockly/blockly.min.js"></script>
+    <script src="https://unpkg.com/blockly/javascript_compressed.js"></script>
+    <script src="https://unpkg.com/blockly/msg/ja.js"></script>
+    
+    <!-- Canvas Confetti for pop score celebration -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    
+    <!-- Custom Style Sheet -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <!-- App Header -->
+    <header class="app-header">
+        <div class="logo-area">
+            <span class="logo-icon"><i class="fa-solid fa-paper-plane"></i></span>
+            <div class="logo-text">
+                <h1>プログラミング体験ゲーム</h1>
+                <span class="sub-text">ブロックでドローンをうごかそう！</span>
+            </div>
+        </div>
+        
+        <!-- Live Telemetry Status Bar -->
+        <div class="telemetry-bar">
+            <div class="tel-item" id="status-connection">
+                <span class="tel-label">しんごう</span>
+                <span class="tel-value"><i class="fa-solid fa-wifi"></i> <span id="val-connection">せつぞくちゅう...</span></span>
+            </div>
+            <div class="tel-item" id="status-battery">
+                <span class="tel-label">バッテリー</span>
+                <span class="tel-value">
+                    <i class="fa-solid fa-battery-three-quarters" id="icon-battery"></i> 
+                    <span id="val-battery">--</span>%
+                </span>
+                <div class="battery-bar-container">
+                    <div class="battery-bar-inner" id="inner-battery-bar" style="width: 0%"></div>
+                </div>
+            </div>
+            <div class="tel-item">
+                <span class="tel-label">たかさ</span>
+                <span class="tel-value"><i class="fa-solid fa-arrows-up-down"></i> <span id="val-altitude">0</span> cm</span>
+            </div>
+            
+            <div class="tel-item">
+                <span class="tel-label">おんど</span>
+                <span class="tel-value"><i class="fa-solid fa-temperature-half"></i> <span id="val-temp">--</span> ℃</span>
+            </div>
+        </div>
+
+        <!-- Connection Settings / Mode -->
+        <div class="header-controls">
+            <button id="btn-player-reset" class="btn btn-reset" title="コードと得点をすべて消して次の人に交代します">
+                <i class="fa-solid fa-user-plus"></i> 次の人に代わる(リセット)
+            </button>
+            <button id="btn-settings-open" class="btn btn-outline" title="ゲーム設定を開きます">
+                <i class="fa-solid fa-gear"></i> 設定
+            </button>
+            <button id="btn-reconnect" class="btn btn-connect" title="Telloと接続します">
+                <i class="fa-solid fa-rotate"></i> 再接続
+            </button>
+        </div>
+    </header>
+
+    <!-- Main Workspace Container -->
+    <main class="workspace-container">
+        
+        <!-- Left Side: Camera Preview & Manual / Emergency controls -->
+        <section class="left-panel">
+            <!-- Camera & Simulator Screen -->
+            <div class="camera-card">
+                <div class="card-header">
+                    <h2><i class="fa-solid fa-video"></i> ドローンのカメラえいぞう</h2>
+                    <span class="live-indicator" id="live-indicator"><span class="dot"></span>LIVE</span>
+                </div>
+                <div class="video-container">
+                    <!-- Stream directly from Flask endpoint -->
+                    <img id="video-feed" src="{{ url_for('video_feed') }}" alt="Camera Feed">
+                </div>
+            </div>
+
+            <!-- Program Control Buttons (Run / Stop / Emergency) -->
+            <div class="control-card">
+                <div class="card-header">
+                    <h2><i class="fa-solid fa-gamepad"></i> プログラムのそうさ</h2>
+                </div>
+                <div class="control-buttons">
+                    <button id="btn-run" class="btn btn-run-prog">
+                        <i class="fa-solid fa-play"></i> スタート！
+                    </button>
+                    <button id="btn-pause" class="btn btn-pause-prog" disabled>
+                        <i class="fa-solid fa-pause"></i> 一時停止
+                    </button>
+                    <button id="btn-stop" class="btn btn-stop-prog" disabled>
+                        <i class="fa-solid fa-square"></i> とめる
+                    </button>
+                </div>
+                <!-- Emergency LAND Button - Big, Pop Red for Safety -->
+                <button id="btn-emergency" class="btn btn-emergency-land">
+                    <i class="fa-solid fa-triangle-exclamation"></i> 緊急ちゃくりく
+                </button>
+            </div>
+
+            <!-- Player Game Score Panel (Visible only when game mode is enabled) -->
+            <div class="score-card" id="score-panel" style="display: none;">
+                <div class="card-header">
+                    <h2><i class="fa-solid fa-star"></i> ゲームスコア</h2>
+                </div>
+                <div class="score-display">
+                    <div class="score-box">
+                        <span class="score-label">とくてん</span>
+                        <div class="score-val-container">
+                            <span class="score-value" id="val-score">0</span>
+                            <span class="score-unit">点</span>
+                        </div>
+                    </div>
+                    <div class="score-box">
+                        <span class="score-label">ざんていじゅんい</span>
+                        <div class="score-val-container">
+                            <span class="score-value" id="val-rank">--</span>
+                            <span class="score-unit">位</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="score-buttons">
+                    <button id="btn-register-score" class="btn btn-score-register">
+                        <i class="fa-solid fa-trophy"></i> ランキングに登録
+                    </button>
+                    <button id="btn-show-ranking" class="btn btn-outline" style="border-radius: var(--border-radius-sm);">
+                        <i class="fa-solid fa-list-ol"></i> ランキング
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- Right Side: Blockly Code Editor Workspace -->
+        <section class="right-panel">
+            <div class="blockly-card">
+                <div class="card-header blockly-header">
+                    <h2><i class="fa-solid fa-puzzle-piece"></i> ブロックをくみたてよう！</h2>
+                    <div class="workspace-actions">
+                        <button id="btn-clear-workspace" class="btn btn-outline" title="ブロックを全部消します">
+                            <i class="fa-solid fa-trash-can"></i> ぜんぶけす
+                        </button>
+                    </div>
+                </div>
+                <!-- Div where Blockly will inject the workspace -->
+                <div id="blockly-div"></div>
+            </div>
+        </section>
+        
+    </main>
+
+    <!-- Settings Modal -->
+    <div id="modal-settings" class="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3><i class="fa-solid fa-gear"></i> ゲーム・システム設定</h3>
+                <span class="modal-close" id="modal-settings-close">&times;</span>
+            </div>
+            <div class="modal-body">
+                <div class="settings-group">
+                    <label class="switch-container">
+                        <input type="checkbox" id="chk-game-mode">
+                        <span class="switch-slider"></span>
+                        <span class="switch-label">🎮 ARゲームモードを有効にする</span>
+                    </label>
+                </div>
+                <p class="settings-desc">
+                    ゲームモードを有効にすると、カメラでARマーカー(ArUco)を検出し、マーカーに応じた得点を競うことができるようになります。
+                </p>
+                <div class="settings-actions">
+                    <button id="btn-open-signage" class="btn btn-primary btn-full" style="margin-bottom: 10px;">
+                        <i class="fa-solid fa-desktop"></i> 別ウィンドウでランキングを表示
+                    </button>
+                    <a href="/settings" target="_blank" class="btn btn-outline btn-full" style="margin-top: 0;">
+                        <i class="fa-solid fa-arrow-up-right-from-square"></i> マーカー配点設定・印刷ページを開く
+                    </a>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-primary" id="btn-settings-save">設定を保存する</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Nickname Registration Modal -->
+    <div id="modal-nickname" class="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3><i class="fa-solid fa-trophy"></i> ランキングに登録</h3>
+                <span class="modal-close" id="modal-nickname-close">&times;</span>
+            </div>
+            <div class="modal-body">
+                <p class="nickname-instructions">きみの なまえ（ニックネーム）をいれてね！</p>
+                <input type="text" id="input-nickname" maxlength="10" placeholder="パイロット名 (10文字まで)">
+                <div id="nickname-error" class="nickname-error" style="display: none;">なまえを入力してください。</div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-run-prog" id="btn-nickname-submit">登録して次の人へ</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Ranking Modal -->
+    <div id="modal-ranking" class="modal-overlay">
+        <div class="modal-content modal-large">
+            <div class="modal-header">
+                <h3><i class="fa-solid fa-crown"></i> ランキング TOP 10</h3>
+                <span class="modal-close" id="modal-ranking-close">&times;</span>
+            </div>
+            <div class="modal-body">
+                <table class="ranking-table">
+                    <thead>
+                        <tr>
+                            <th style="width: 20%; text-align: center;">順位</th>
+                            <th style="width: 50%;">ニックネーム</th>
+                            <th style="width: 30%; text-align: right;">得点</th>
+                        </tr>
+                    </thead>
+                    <tbody id="ranking-list-body">
+                        <!-- Loaded via API dynamically -->
+                    </tbody>
+                </table>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-outline" id="btn-ranking-close">とじる</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Blockly Toolbox Definition (Hidden XML structure) -->
+    <xml id="toolbox" style="display: none">
+        <!-- Category: Basic Fly Controls -->
+        <category name="とぶ・おりる" colour="#FF7043">
+            <block type="tello_takeoff"></block>
+            <block type="tello_land"></block>
+        </category>
+        
+        <!-- Category: Movement -->
+        <category name="すすむ" colour="#29B6F6">
+            <block type="tello_move">
+                <value name="distance">
+                    <shadow type="math_number">
+                        <field name="NUM">50</field>
+                    </shadow>
+                </value>
+            </block>
+            <block type="tello_move_updown">
+                <value name="distance">
+                    <shadow type="math_number">
+                        <field name="NUM">50</field>
+                    </shadow>
+                </value>
+            </block>
+        </category>
+
+        <!-- Category: Rotations -->
+        <category name="まわる" colour="#AB47BC">
+            <block type="tello_rotate">
+                <value name="degree">
+                    <shadow type="math_number">
+                        <field name="NUM">90</field>
+                    </shadow>
+                </value>
+            </block>
+        </category>
+
+        <!-- Category: Controls / Logic -->
+        <category name="コントロール" colour="#FFCA28">
+            <block type="tello_wait">
+                <value name="seconds">
+                    <shadow type="math_number">
+                        <field name="NUM">2</field>
+                    </shadow>
+                </value>
+            </block>
+            <!-- Blockly Standard Loops -->
+            <block type="controls_repeat_ext">
+                <value name="TIMES">
+                    <shadow type="math_number">
+                        <field name="NUM">3</field>
+                    </shadow>
+                </value>
+            </block>
+        </category>
+        
+        <!-- Category: Numbers/Math (for distance/loops) -->
+        <category name="すうじ" colour="#9CCC65">
+            <block type="math_number"></block>
+        </category>
+    </xml>
+
+    <!-- App Script -->
+    <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+</body>
+</html>
