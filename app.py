@@ -29,6 +29,7 @@ class GameManager:
         self.current_score = 0
         self.detected_markers = set()
         self.newly_detected = []
+        self.program_running = False
         self.lock = threading.RLock()
         
         # Load ranking
@@ -76,8 +77,8 @@ class GameManager:
 
     def detect_marker(self, marker_id):
         with self.lock:
-            # Skip if game mode is off or marker is already detected
-            if not self.game_mode_enabled:
+            # Skip if game mode is off, program is not running, or marker is already detected
+            if not self.game_mode_enabled or not self.program_running:
                 return
             
             str_id = str(marker_id)
@@ -102,6 +103,7 @@ class GameManager:
             self.current_score = 0
             self.detected_markers.clear()
             self.newly_detected.clear()
+            self.program_running = False
             print("【ゲーム】プレイヤー状態がリセットされました。")
 
     def register_score(self, name):
@@ -149,6 +151,7 @@ class TelloController:
         self.flight_time = 0
         self.status_thread = None
         self.frame_read = None
+        self.last_stream_retry = 0
         self.lock = threading.Lock()
         
         # Setup OpenCV ArUco Detector
@@ -160,10 +163,33 @@ class TelloController:
             print(f"ArUcoディテクタ初期化失敗 (古いOpenCVの可能性があります): {e}")
             self.aruco_detector = None
 
-    def connect(self):
+    def connect(self, force=False):
         with self.lock:
+            # If already connected to a real drone, reuse the connection
+            if not force and self.tello is not None and self.is_connected and not self.is_mock:
+                return True, "すでにTelloドローンに接続しています！"
+
             try:
                 from djitellopy import Tello as DJITello
+                
+                # If there's an existing instance, end it explicitly first to clean up socket binds
+                if self.tello is not None:
+                    # Set is_connected to False first to signal the status thread to exit
+                    self.is_connected = False
+                    try:
+                        self.tello.streamoff()
+                    except Exception:
+                        pass
+                    try:
+                        self.tello.end()
+                    except Exception:
+                        pass
+                    self.tello = None
+                self.frame_read = None
+                
+                # Allow OS to free bound UDP ports (8889, 11111, etc.)
+                time.sleep(1.5)
+
                 print("Telloドローンへの接続を試みています...")
                 self.tello = DJITello()
                 self.tello.connect()
@@ -202,11 +228,12 @@ class TelloController:
     def _update_status_loop(self):
         while self.is_connected:
             try:
-                if not self.is_mock and self.tello:
-                    self.battery = self.tello.get_battery()
-                    self.temperature = self.tello.get_highest_temperature()
-                    self.altitude = self.tello.get_distance_tof()
-                    self.flight_time = self.tello.get_flight_time()
+                t = self.tello
+                if not self.is_mock and t:
+                    self.battery = t.get_battery()
+                    self.temperature = t.get_highest_temperature()
+                    self.altitude = t.get_distance_tof()
+                    self.flight_time = t.get_flight_time()
                 else:
                     # Simulating minor battery drain or sensor shifts
                     if self.altitude > 0:
@@ -275,8 +302,10 @@ class TelloController:
         try:
             if action == 'takeoff':
                 self.tello.takeoff()
+                time.sleep(3.0)  # Wait for drone to stabilize at hovering altitude
             elif action == 'land':
                 self.tello.land()
+                time.sleep(2.0)  # Wait for drone to fully touch down
             elif action == 'move':
                 direction = params.get('direction')
                 distance = int(params.get('distance', 20))
@@ -318,13 +347,28 @@ class TelloController:
 
     def get_frame(self):
         frame = None
-        if not self.is_mock and self.frame_read:
-            try:
-                frame_raw = self.frame_read.frame
-                # djitellopy returns RGB, OpenCV needs BGR
-                frame = cv2.cvtColor(frame_raw, cv2.COLOR_RGB2BGR)
-            except Exception as e:
-                print(f"フレーム取得エラー: {e}")
+        if not self.is_mock:
+            # If the decoder was stopped due to connection drops, discard it
+            if self.frame_read and getattr(self.frame_read, 'stopped', False):
+                self.frame_read = None
+            
+            # Dynamically retry initializing frame_read if it was not started or was discarded (rate-limited to every 5s)
+            if not self.frame_read and self.tello:
+                now = time.time()
+                if now - self.last_stream_retry > 5.0:
+                    self.last_stream_retry = now
+                    try:
+                        self.frame_read = self.tello.get_frame_read()
+                    except Exception as e:
+                        pass
+            
+            if self.frame_read:
+                try:
+                    frame_raw = self.frame_read.frame
+                    # djitellopy returns RGB, OpenCV needs BGR
+                    frame = cv2.cvtColor(frame_raw, cv2.COLOR_RGB2BGR)
+                except Exception as e:
+                    print(f"フレーム取得エラー: {e}")
         
         # Fallback to pop-looking simulated frame
         if frame is None:
@@ -426,6 +470,7 @@ controller = TelloController()
 # Flask Routes
 @app.route('/')
 def index():
+    game_manager.program_running = False
     return render_template('index.html')
 
 @app.route('/settings')
@@ -438,7 +483,7 @@ def ranking_page():
 
 @app.route('/api/connect', methods=['POST'])
 def api_connect():
-    success, message = controller.connect()
+    success, message = controller.connect(force=True)
     return jsonify({
         "success": success,
         "message": message,
@@ -498,6 +543,18 @@ def api_save_settings():
     game_manager.save_settings()
     
     return jsonify({"success": True, "message": "設定を保存しました"})
+
+@app.route('/api/program/start', methods=['POST'])
+def api_program_start():
+    game_manager.program_running = True
+    print("【システム】プログラムの実行が開始されました。ARマーカーの得点判定を有効にします。")
+    return jsonify({"success": True, "message": "プログラムの実行状態を開始しました"})
+
+@app.route('/api/program/stop', methods=['POST'])
+def api_program_stop():
+    game_manager.program_running = False
+    print("【システム】プログラムの実行が停止されました。ARマーカーの得点判定を無効にします。")
+    return jsonify({"success": True, "message": "プログラムの実行状態を停止しました"})
 
 @app.route('/api/game/reset', methods=['POST'])
 def api_game_reset():

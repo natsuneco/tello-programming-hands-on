@@ -420,6 +420,12 @@ function showScoreToast(points) {
 
 // Reconnect/init trigger
 async function reconnectTello() {
+    const btn = document.getElementById('btn-reconnect');
+    if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> せつぞく中...';
+    }
+    
     addLog("Telloにせつぞくしています...", 'system');
     try {
         const response = await fetch('/api/connect', { method: 'POST' });
@@ -431,6 +437,11 @@ async function reconnectTello() {
         }
     } catch (e) {
         addLog("サーバーにせつぞくできません。", 'error');
+    } finally {
+        if (btn) {
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fa-solid fa-rotate"></i> 再接続';
+        }
     }
 }
 
@@ -677,6 +688,13 @@ async function startProgram() {
         return;
     }
     
+    // Notify server that program execution has started (enables score accumulation)
+    try {
+        await fetch('/api/program/start', { method: 'POST' });
+    } catch (e) {
+        console.error("Failed to sync program start state with server:", e);
+    }
+    
     try {
         const runFn = new Function('executeCommand', 'highlightBlock', `
             return (async () => {
@@ -724,6 +742,11 @@ function resetRunState() {
     document.getElementById('btn-run').disabled = false;
     document.getElementById('btn-stop').disabled = true;
     document.getElementById('btn-pause').disabled = true;
+    
+    // Notify server that program execution has stopped (disables score accumulation)
+    fetch('/api/program/stop', { method: 'POST' }).catch(e => {
+        console.error("Failed to sync program stop state with server:", e);
+    });
 }
 
 // Emergency landing cutoff

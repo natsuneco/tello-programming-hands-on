@@ -9,15 +9,15 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;800&family=Zen+Maru+Gothic:wght@500;700;900&display=swap" rel="stylesheet">
     <!-- FontAwesome for icons -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/all.min.css') }}">
     
-    <!-- Blockly CDN -->
-    <script src="https://unpkg.com/blockly/blockly.min.js"></script>
-    <script src="https://unpkg.com/blockly/javascript_compressed.js"></script>
-    <script src="https://unpkg.com/blockly/msg/ja.js"></script>
+    <!-- Blockly Local -->
+    <script src="{{ url_for('static', filename='js/blockly.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/javascript_compressed.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/msg_ja.js') }}"></script>
     
     <!-- Canvas Confetti for pop score celebration -->
-    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <script src="{{ url_for('static', filename='js/confetti.browser.min.js') }}"></script>
     
     <!-- Custom Style Sheet -->
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
